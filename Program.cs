@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using WindowsFormsApp10;
 
@@ -9,7 +10,7 @@ namespace BoardGameWinForms
 {
     // Enums
     public enum CellState { Empty, Player1, Player2, Resource }
-    public enum ResourceType { Mana, Rage, Sword }
+    public enum ResourceType { Mana, Rage, Sword, Health }
     public enum SkillType { DestroyArea, Heal, RageBoost }
 
     // Board Manager
@@ -98,6 +99,7 @@ namespace BoardGameWinForms
             foreach (var dir in directions)
             {
                 int count = 1;
+                int blockedEnds = 0; // Biến đếm số đầu bị chặn
                 int dx = dir[0];
                 int dy = dir[1];
 
@@ -107,23 +109,45 @@ namespace BoardGameWinForms
                     int newX = x + dx * i;
                     int newY = y + dy * i;
                     if (IsInBounds(newX, newY) && board[newX, newY] == player)
+                    {
                         count++;
+                    }
+                    else if (IsInBounds(newX, newY) && board[newX, newY] != CellState.Empty)
+                    {
+                        blockedEnds++;
+                        break; // Dừng kiểm tra nếu gặp ô bị chặn
+                    }
                     else
-                        break;
+                    {
+                        break; // Dừng kiểm tra nếu gặp ô trống
+                    }
+
                 }
 
                 // Kiểm tra về hướng âm
                 for (int i = 1; i <= 3; i++)
                 {
+
                     int newX = x - dx * i;
                     int newY = y - dy * i;
                     if (IsInBounds(newX, newY) && board[newX, newY] == player)
+                    {
                         count++;
+                    }
+                    else if (IsInBounds(newX, newY) && board[newX, newY] != CellState.Empty)
+                    {
+                        blockedEnds++;
+                        break; // Dừng kiểm tra nếu gặp ô bị chặn
+                    }
                     else
-                        break;
+                    {
+                        break; // Dừng kiểm tra nếu gặp ô trống
+                    }
+
                 }
 
-                if (count >= 4)
+
+                if (count >= 4 && blockedEnds < 2) // Kiểm tra blockedEnds
                     return true;
             }
             return false;
@@ -181,11 +205,13 @@ namespace BoardGameWinForms
         private Player player1, player2;
         private int currentPlayerIndex = 0;
         private int turnCount = 0;
-
+        private Timer turnTimer;
+        private int timeLeft = 10;
         private Button[,] boardButtons;
         private Label lblCurrentTurn, lblPlayer1Info, lblPlayer2Info;
         private Button btnDestroyArea, btnHeal, btnRageBoost;
-
+        private bool isSelectingDestroyArea = false; // Biến cờ để theo dõi trạng thái chọn vùng
+        private Label lblTimeLeft;
         public GameForm()
         {
             InitializeComponent();
@@ -197,7 +223,10 @@ namespace BoardGameWinForms
             this.Text = "Advanced Board Game";
             this.Size = new Size(1000, 800);
             this.StartPosition = FormStartPosition.CenterScreen;
-
+            // Khởi tạo Timer
+            turnTimer = new Timer();
+            turnTimer.Interval = 1000; // 1 giây
+            turnTimer.Tick += TurnTimer_Tick;
             Panel boardPanel = new Panel
             {
                 Location = new Point(50, 100),
@@ -219,6 +248,15 @@ namespace BoardGameWinForms
                     boardPanel.Controls.Add(boardButtons[i, j]);
                 }
             }
+            // Khởi tạo Label hiển thị thời gian
+            lblTimeLeft = new Label
+            {
+                Location = new Point(350, 50), // Điều chỉnh vị trí theo ý muốn
+                Size = new Size(100, 30),
+                Font = new Font(Font.FontFamily, 12),
+                Text = "Thời gian: 10s" // Hiển thị thời gian ban đầu
+            };
+            this.Controls.Add(lblTimeLeft);
 
             lblCurrentTurn = new Label
             {
@@ -250,6 +288,7 @@ namespace BoardGameWinForms
             btnHeal.Click += (s, e) => UseSkill(SkillType.Heal);
             btnRageBoost.Click += (s, e) => UseSkill(SkillType.RageBoost);
 
+
             this.Controls.Add(boardPanel);
             this.Controls.Add(lblCurrentTurn);
             this.Controls.Add(lblPlayer1Info);
@@ -258,7 +297,7 @@ namespace BoardGameWinForms
             this.Controls.Add(btnHeal);
             this.Controls.Add(btnRageBoost);
         }
-
+        
         private Button CreateSkillButton(string text, int x, int y)
         {
             return new Button
@@ -268,12 +307,46 @@ namespace BoardGameWinForms
                 Text = text
             };
         }
+        private void StartTurnTimer()
+        {
+            timeLeft = 10;
+            lblTimeLeft.Text = $"Thời gian: {timeLeft}s"; // Cập nhật label khi bắt đầu timer
 
+            turnTimer.Start();
+        }
+
+        private void StopTurnTimer()
+        {
+            turnTimer.Stop();
+        }
+        private void TurnTimer_Tick(object sender, EventArgs e)
+        {
+            timeLeft--;
+            lblTimeLeft.Text = $"Thời gian: {timeLeft}s"; // Cập nhật label mỗi giây
+
+            if (timeLeft <= 0)
+            {
+                StopTurnTimer();
+                MessageBox.Show($"Hết giờ! Lượt của người chơi {currentPlayerIndex + 1} bị mất.");
+                SwitchTurns();
+
+            }
+        }
         private void InitializeGame()
         {
             boardManager = new BoardManager();
             player1 = new Player();
             player2 = new Player();
+
+            // Cài đặt tài nguyên mặc định cho người chơi 1
+            player1.Mana = 5; // Ví dụ: 5 Mana
+            player1.Rage = 5; // Ví dụ: 5 Rage
+
+            // Cài đặt tài nguyên mặc định cho người chơi 2 (tùy chọn)
+            player2.Mana = 5;
+            player2.Rage = 5;
+
+
             UpdatePlayerInfo();
         }
 
@@ -281,6 +354,39 @@ namespace BoardGameWinForms
         {
             Button clickedButton = (Button)sender;
             Point coordinates = (Point)clickedButton.Tag;
+            
+
+
+            if (isSelectingDestroyArea)
+            {
+                // Sử dụng kỹ năng DestroyArea tại vị trí được chọn
+                Player currentPlayer = currentPlayerIndex == 0 ? player1 : player2;
+                boardManager.ClearArea(coordinates.X, coordinates.Y);
+                
+                
+
+                // Cập nhật lại các nút bị ảnh hưởng bởi ClearArea
+                for (int x = Math.Max(0, coordinates.X - 1); x < Math.Min(BoardManager.BOARD_SIZE, coordinates.X + 2); x++)
+                {
+                    for (int y = Math.Max(0, coordinates.Y - 1); y < Math.Min(BoardManager.BOARD_SIZE, coordinates.Y + 2); y++)
+                    {
+                        boardButtons[x, y].Text = "";
+                        boardButtons[x, y].BackColor = Color.White;
+                    }
+                }
+
+
+                isSelectingDestroyArea = false; // Kết thúc chọn vùng
+                currentPlayerIndex = 1 - currentPlayerIndex; //chuyển lượt
+                turnCount++;
+                lblCurrentTurn.Text = $"Lượt chơi: Người chơi {currentPlayerIndex + 1}";
+                GenerateRandomResource();
+                UpdatePlayerInfo();
+
+                return; // Thoát khỏi xử lý sự kiện click bình thường
+
+
+            }
 
             // Kiểm tra nếu ô là tài nguyên
             if (boardManager.board[coordinates.X, coordinates.Y] == CellState.Resource)
@@ -328,11 +434,14 @@ namespace BoardGameWinForms
 
                 // Cập nhật thông tin người chơi
                 UpdatePlayerInfo();
+                SwitchTurns();
             }
             else
             {
                 MessageBox.Show("Nước đi không hợp lệ. Vui lòng chọn ô trống.");
             }
+            StopTurnTimer();
+            SwitchTurns();
         }
 
         private void CollectResource(int x, int y)
@@ -425,17 +534,51 @@ namespace BoardGameWinForms
             {
                 MessageBox.Show($"Người chơi {currentPlayerIndex + 1} đã thu thập tài nguyên: {resourceText} và đặt quân");
             }
+            StopTurnTimer();
+            SwitchTurns();
+        }
+        private void SwitchTurns()
+        {
+            StopTurnTimer(); // Dừng timer trước khi chuyển lượt
+
+            currentPlayerIndex = 1 - currentPlayerIndex;
+            turnCount++;
+            lblCurrentTurn.Text = $"Lượt chơi: Người chơi {currentPlayerIndex + 1}";
+            GenerateRandomResource();
+            UpdatePlayerInfo();
+
+
+            StartTurnTimer(); // Bắt đầu lại timer sau khi chuyển lượt
         }
 
         private void GenerateSingleRandomResource(int playerIndex)
         {
             Random rand = new Random();
-            ResourceType resourceType = (ResourceType)rand.Next(3);
 
-            // Lấy người chơi hiện tại
+            // Tỷ lệ: Mana 40%, Rage 40%, Sword 10%, Health 10% (Điều chỉnh theo ý muốn)
+            ResourceType[] resources = { ResourceType.Mana, ResourceType.Rage, ResourceType.Sword, ResourceType.Health };
+            int[] weights = { 40, 40, 10, 10 }; // Tổng trọng số: 100
+
+            int totalWeight = weights.Sum();
+            int randomNumber = rand.Next(totalWeight);
+
+            ResourceType resourceType = resources[0]; // Khởi tạo giá trị mặc định
+
+            int cumulativeWeight = 0;
+            for (int i = 0; i < resources.Length; i++)
+            {
+                cumulativeWeight += weights[i];
+                if (randomNumber < cumulativeWeight)
+                {
+                    resourceType = resources[i];
+                    break;
+                }
+            }
+
             Player currentPlayer = playerIndex == 0 ? player1 : player2;
+            Player opponentPlayer = playerIndex == 1 ? player1 : player2;
 
-            // Thêm tài nguyên vào kho của người chơi
+
             switch (resourceType)
             {
                 case ResourceType.Mana:
@@ -447,12 +590,29 @@ namespace BoardGameWinForms
                     MessageBox.Show($"Người chơi {playerIndex + 1} nhận được 1 Rage!");
                     break;
                 case ResourceType.Sword:
+                    int damage = 10;
+                    if (currentPlayer.BoostedDamageTurns > 0)
+                    {
+                        damage *= 2;
+                        currentPlayer.BoostedDamageTurns--;
+                    }
+                    opponentPlayer.Health = Math.Max(0, opponentPlayer.Health - damage);
+                    MessageBox.Show($"Người chơi {playerIndex + 1} nhận được Sword và gây {damage} sát thương lên đối thủ!");
+
+                    // Kiểm tra nếu đối thủ hết máu sau khi bị tấn công
+                    if (opponentPlayer.Health <= 0)
+                    {
+                        MessageBox.Show($"Người chơi {currentPlayerIndex + 1} chiến thắng!");
+                        ResetGame();
+                    }
+                    break;
+
+                case ResourceType.Health:
                     currentPlayer.Health = Math.Min(currentPlayer.Health + 10, 100);
                     MessageBox.Show($"Người chơi {playerIndex + 1} nhận được 10 HP!");
                     break;
             }
 
-            // Cập nhật thông tin người chơi
             UpdatePlayerInfo();
         }
 
@@ -468,17 +628,26 @@ namespace BoardGameWinForms
                 switch (skillType)
                 {
                     case SkillType.DestroyArea:
-                        boardManager.ClearArea(5, 5);
+                        if (!isSelectingDestroyArea)
+                        {
+                            isSelectingDestroyArea = true;
+                            MessageBox.Show("Hãy chọn một ô để phá hủy vùng xung quanh.");
+                            currentPlayer.UseSkill(skillType);
+                            UpdatePlayerInfo();
+                        }
+                        // ĐÃ DI CHUYỂN VIỆC TRỪ TÀI NGUYÊN VÀO ĐÂY
+                        
                         break;
+
                     case SkillType.Heal:
                         break;
                     case SkillType.RageBoost:
                         break;
                 }
 
-                currentPlayer.UseSkill(skillType);
+                
                 UpdatePlayerInfo();
-                UpdateBoardDisplay();
+               
             }
             else
             {
@@ -488,11 +657,13 @@ namespace BoardGameWinForms
 
         private void GenerateRandomResource()
         {
-            // Kiểm tra mỗi 5 lượt chơi, bắt đầu từ lượt thứ 5
-            if ((turnCount > 0) && (turnCount % 5 == 0))
+            if (turnCount > 0 && turnCount % 5 == 0) // Kiểm tra sau mỗi 10 lượt
             {
                 Random rand = new Random();
-                int resourceCount = rand.Next(1, 4);  // Tạo số tài nguyên ngẫu nhiên (1-3)
+                int resourceCount = rand.Next(1, 4); // Số lượng tài nguyên ngẫu nhiên (1-3)
+
+                ResourceType[] resources = { ResourceType.Mana, ResourceType.Rage, ResourceType.Sword, ResourceType.Health };
+                int[] weights = { 40, 40, 15, 5 }; // Tỷ lệ Mana 40%, Rage 40%, Sword 10%, Health 10%
 
                 for (int i = 0; i < resourceCount; i++)
                 {
@@ -500,21 +671,34 @@ namespace BoardGameWinForms
                     int attempts = 0;
                     do
                     {
-                        x = rand.Next(10);
-                        y = rand.Next(10);
+                        x = rand.Next(BoardManager.BOARD_SIZE);
+                        y = rand.Next(BoardManager.BOARD_SIZE);
                         attempts++;
+                        if (attempts > 100) return; // Thoát nếu không tìm thấy ô trống sau 100 lần thử
+                    } while (boardManager.board[x, y] != CellState.Empty);
 
-                        // Ngăn chặn vòng lặp vô hạn nếu bàn cờ gần như đầy
-                        if (attempts > 100)
+
+                    // Chọn loại tài nguyên theo tỷ lệ
+                    int totalWeight = weights.Sum();
+                    int randomNumber = rand.Next(totalWeight);
+                    int cumulativeWeight = 0;
+                    ResourceType resourceType = resources[0]; // Giá trị mặc định
+
+                    for (int j = 0; j < resources.Length; j++)
+                    {
+                        cumulativeWeight += weights[j];
+                        if (randomNumber < cumulativeWeight)
                         {
-                            return;  // Thoát nếu không tìm được ô trống
+                            resourceType = resources[j];
+                            break;
                         }
-                    } while (boardManager.board[x, y] != CellState.Empty);  // Kiểm tra ô trống
+                    }
+
+
 
                     boardManager.board[x, y] = CellState.Resource;
-                    ResourceType resourceType = (ResourceType)rand.Next(3);
 
-                    // Chọn loại tài nguyên ngẫu nhiên
+                    // Hiển thị tài nguyên trên bàn cờ
                     switch (resourceType)
                     {
                         case ResourceType.Mana:
@@ -528,6 +712,10 @@ namespace BoardGameWinForms
                         case ResourceType.Sword:
                             boardButtons[x, y].BackColor = Color.Yellow;
                             boardButtons[x, y].Text = "S";
+                            break;
+                        case ResourceType.Health:
+                            boardButtons[x, y].BackColor = Color.Pink; // Hoặc màu khác tùy ý
+                            boardButtons[x, y].Text = "H";
                             break;
                     }
                 }
