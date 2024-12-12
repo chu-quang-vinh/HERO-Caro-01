@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using WindowsFormsApp10;
+using System.IO;
+
 
 namespace BoardGameWinForms
 {
@@ -180,22 +182,9 @@ namespace BoardGameWinForms
         public int Rage { get; set; } = 0;
         public int Health { get; set; } = 100;
         public int BoostedDamageTurns { get; set; } = 0;
+        private const int SwordDamage = 30; // Sát thương của một Kiếm
 
-        public bool CanUseSkill(SkillType skillType)
-        {
-            switch (skillType)
-            {
-                case SkillType.DestroyArea:
-                    return Mana >= 2 && Rage >= 2;
-                case SkillType.Heal:
-                    return Mana >= 3;
-                case SkillType.RageBoost:
-                    return Rage >= 3;
-                default:
-                    return false;
-            }
-        }
-
+        // Remove the duplicate method
         public void UseSkill(SkillType skillType)
         {
             switch (skillType)
@@ -210,8 +199,24 @@ namespace BoardGameWinForms
                     break;
                 case SkillType.RageBoost:
                     Rage -= 3;
-                    BoostedDamageTurns = 3;
+                    BoostedDamageTurns = 3; // Set to 3 turns of boosted damage
                     break;
+            }
+        }
+
+        // Add a method to check if the player has enough resources to use a skill
+        public bool CanUseSkill(SkillType skillType)
+        {
+            switch (skillType)
+            {
+                case SkillType.DestroyArea:
+                    return Mana >= 2 && Rage >= 2;
+                case SkillType.Heal:
+                    return Mana >= 3;
+                case SkillType.RageBoost:
+                    return Rage >= 3;
+                default:
+                    return false;
             }
         }
     }
@@ -230,6 +235,7 @@ namespace BoardGameWinForms
         private Button btnDestroyArea, btnHeal, btnRageBoost;
         private bool isSelectingDestroyArea = false; // Biến cờ để theo dõi trạng thái chọn vùng
         private Label lblTimeLeft;
+        private ProgressBar pbPlayer1Health, pbPlayer2Health;
         public GameForm()
         {
             InitializeComponent();
@@ -246,23 +252,51 @@ namespace BoardGameWinForms
                 turnTimer.Dispose(); // Giải phóng tài nguyên
             }
         }
-        
+
 
         private void InitializeComponent()
         {
             this.Text = "Advanced Board Game";
-            this.Size = new Size(1000, 800);
+            this.Size = new Size(1200, 800); // Điều chỉnh kích thước
             this.StartPosition = FormStartPosition.CenterScreen;
+
+            // Khởi tạo bảng chơi
+            Panel boardPanel = new Panel
+            {
+                Location = new Point(300, 100), // Trung tâm giao diện
+                Size = new Size(500, 500)
+            };
+
             // Khởi tạo Timer
             turnTimer = new Timer();
             turnTimer.Interval = 1000; // 1 giây
             turnTimer.Tick += TurnTimer_Tick;
-            Panel boardPanel = new Panel
-            {
-                Location = new Point(50, 100),
-                Size = new Size(500, 500)
-            };
 
+            // Đảm bảo khởi tạo player1 và player2 trước khi dùng
+            if (player1 == null) player1 = new Player { Health = 100 };
+            if (player2 == null) player2 = new Player { Health = 100 };
+
+            // Thanh máu cho Người chơi 1
+            pbPlayer1Health = new ProgressBar
+            {
+                Location = new Point(80, 100),
+                Size = new Size(200, 20),
+                Maximum = 100,
+                Value = player1.Health // Đảm bảo player1 được khởi tạo
+            };
+            this.Controls.Add(pbPlayer1Health);
+
+            // Thanh máu cho Người chơi 2
+            pbPlayer2Health = new ProgressBar
+            {
+                Location = new Point(880, 100),
+                Size = new Size(200, 20),
+                Maximum = 100,
+                Value = player2.Health // Đảm bảo player2 được khởi tạo
+            };
+            this.Controls.Add(pbPlayer2Health);
+
+            // Khởi tạo ma trận nút cho bảng chơi
             boardButtons = new Button[10, 10];
             for (int i = 0; i < 10; i++)
             {
@@ -270,24 +304,29 @@ namespace BoardGameWinForms
                 {
                     boardButtons[i, j] = new Button
                     {
-                        Location = new Point(j * 50, i * 50),
+                        Location = new Point(j * 50, i * 50), // Kích thước nút lớn hơn
                         Size = new Size(50, 50),
-                        Tag = new Point(i, j)
+                        Tag = new Point(i, j),
+                        BackColor = Color.White, // Màu nền mặc định
+                        //FlatStyle = FlatStyle.Flat, // Giao diện phẳng
+                        Font = new Font("Arial", 16, FontStyle.Bold) // Font chữ to và rõ ràng
                     };
                     boardButtons[i, j].Click += BoardButton_Click;
                     boardPanel.Controls.Add(boardButtons[i, j]);
                 }
             }
+
             // Khởi tạo Label hiển thị thời gian
             lblTimeLeft = new Label
             {
-                Location = new Point(350, 50), // Điều chỉnh vị trí theo ý muốn
+                Location = new Point(350, 50),
                 Size = new Size(100, 30),
                 Font = new Font(Font.FontFamily, 12),
-                Text = "Thời gian: 10s" // Hiển thị thời gian ban đầu
+                Text = "Thời gian: 10s"
             };
             this.Controls.Add(lblTimeLeft);
 
+            // Khởi tạo các Label thông tin
             lblCurrentTurn = new Label
             {
                 Location = new Point(50, 50),
@@ -295,39 +334,58 @@ namespace BoardGameWinForms
                 Font = new Font(Font.FontFamily, 12),
                 Text = "Lượt chơi: Người chơi 1"
             };
-
             lblPlayer1Info = new Label
             {
-                Location = new Point(600, 100),
-                Size = new Size(300, 100),
-                Font = new Font(Font.FontFamily, 10)
+                Location = new Point(100, 120),
+                Size = new Size(200, 100),
+                Font = new Font(Font.FontFamily, 10),
+                Text = "Thông tin Người chơi 1"
             };
-
             lblPlayer2Info = new Label
             {
-                Location = new Point(600, 250),
-                Size = new Size(300, 100),
-                Font = new Font(Font.FontFamily, 10)
+                Location = new Point(800, 100),
+                Size = new Size(200, 100),
+                Font = new Font(Font.FontFamily, 10),
+                Text = "Thông tin Người chơi 2"
             };
 
-            btnDestroyArea = CreateSkillButton("Phá hủy vùng (2M 2R)", 600, 400);
-            btnHeal = CreateSkillButton("Hồi máu (3M)", 600, 450);
-            btnRageBoost = CreateSkillButton("Tăng Rage (3R)", 600, 500);
+            // Thêm các Label vào form
+            this.Controls.Add(lblCurrentTurn);
+            this.Controls.Add(lblPlayer1Info);
+            this.Controls.Add(lblPlayer2Info);
+
+            // Khởi tạo các nút kỹ năng
+            btnDestroyArea = CreateSkillButton("Phá hủy vùng (2M 2R)", 450, 600);
+            btnHeal = CreateSkillButton("Hồi máu (3M)", 450, 630);
+            btnRageBoost = CreateSkillButton("Tăng Rage (3R)", 450, 660);
 
             btnDestroyArea.Click += (s, e) => UseSkill(SkillType.DestroyArea);
             btnHeal.Click += (s, e) => UseSkill(SkillType.Heal);
             btnRageBoost.Click += (s, e) => UseSkill(SkillType.RageBoost);
 
-
-            this.Controls.Add(boardPanel);
-            this.Controls.Add(lblCurrentTurn);
-            this.Controls.Add(lblPlayer1Info);
-            this.Controls.Add(lblPlayer2Info);
+            // Thêm các nút vào form
             this.Controls.Add(btnDestroyArea);
             this.Controls.Add(btnHeal);
             this.Controls.Add(btnRageBoost);
+
+            // Thêm bảng chơi vào form
+            this.Controls.Add(boardPanel);
+
+            // Kiểm tra và thêm hình nền
+            string backgroundPath = "C:\\Users\\Admin\\Downloads\\naruto.png";
+            if (File.Exists(backgroundPath))
+            {
+                this.BackgroundImage = Image.FromFile(backgroundPath);
+                this.BackgroundImageLayout = ImageLayout.Stretch;
+            }
+            else
+            {
+                MessageBox.Show("Không tìm thấy hình nền!");
+            }
         }
-        
+
+
+
         private Button CreateSkillButton(string text, int x, int y)
         {
             return new Button
@@ -510,7 +568,7 @@ namespace BoardGameWinForms
             else if (resourceText == "S")
             {
                 // Kiểm tra xem có Rage Boost không
-                int damageAmount = currentPlayer.BoostedDamageTurns > 0 ? 20 : 10;
+                int damageAmount = currentPlayer.BoostedDamageTurns > 0 ? 60 : 30;
 
                 // Giảm máu đối phương
                 opponentPlayer.Health = Math.Max(0, opponentPlayer.Health - damageAmount);
@@ -584,7 +642,7 @@ namespace BoardGameWinForms
                 string boostMessage = currentPlayer.BoostedDamageTurns > 0
                     ? " (Sát thương tăng gấp đôi do Rage Boost!)"
                     : "";
-                MessageBox.Show($"Người chơi {currentPlayerIndex + 1} đã thu thập Sword, gây {(currentPlayer.BoostedDamageTurns > 0 ? 20 : 10)} sát thương cho đối phương và đặt quân{boostMessage}!");
+                MessageBox.Show($"Người chơi {currentPlayerIndex + 1} đã thu thập Sword, gây {(currentPlayer.BoostedDamageTurns > 0 ? 60 : 30)} sát thương cho đối phương và đặt quân{boostMessage}!");
             }
             else
             {
@@ -651,11 +709,11 @@ namespace BoardGameWinForms
                     MessageBox.Show($"Người chơi {playerIndex + 1} nhận được 1 Rage!");
                     break;
                 case ResourceType.Sword:
-                    int damage = 10;
+                    int damage = 30; // Base damage
                     if (currentPlayer.BoostedDamageTurns > 0)
                     {
-                        damage *= 2;
-                        currentPlayer.BoostedDamageTurns--;
+                        damage *= 2; // Double damage when Rage Boost is active
+                        currentPlayer.BoostedDamageTurns--; // Reduce boosted turns
                     }
                     opponentPlayer.Health = Math.Max(0, opponentPlayer.Health - damage);
                     MessageBox.Show($"Người chơi {playerIndex + 1} nhận được Sword và gây {damage} sát thương lên đối thủ!");
@@ -663,7 +721,7 @@ namespace BoardGameWinForms
                     // Kiểm tra nếu đối thủ hết máu sau khi bị tấn công
                     if (opponentPlayer.Health <= 0)
                     {
-                        MessageBox.Show($"Người chơi {currentPlayerIndex + 1} chiến thắng!");
+                        MessageBox.Show($"Người chơi {playerIndex + 1} chiến thắng!");
                         ResetGame();
                     }
                     break;
@@ -696,19 +754,20 @@ namespace BoardGameWinForms
                             currentPlayer.UseSkill(skillType);
                             UpdatePlayerInfo();
                         }
-                        // ĐÃ DI CHUYỂN VIỆC TRỪ TÀI NGUYÊN VÀO ĐÂY
-                        
                         break;
 
                     case SkillType.Heal:
+                        currentPlayer.UseSkill(skillType);
+                        MessageBox.Show($"Người chơi {currentPlayerIndex + 1} hồi {25} HP!");
                         break;
+
                     case SkillType.RageBoost:
+                        currentPlayer.UseSkill(skillType);
+                        MessageBox.Show($"Người chơi {currentPlayerIndex + 1} kích hoạt Rage Boost. Sát thương tăng gấp đôi trong 3 lượt!");
                         break;
                 }
 
-                
                 UpdatePlayerInfo();
-               
             }
             else
             {
@@ -859,8 +918,13 @@ namespace BoardGameWinForms
 
         private void UpdatePlayerInfo()
         {
-            lblPlayer1Info.Text = $"Người chơi 1:\nMana: {player1.Mana}\nRage: {player1.Rage}\nHP: {player1.Health}";
-            lblPlayer2Info.Text = $"Người chơi 2:\nMana: {player2.Mana}\nRage: {player2.Rage}\nHP: {player2.Health}";
+            pbPlayer1Health.Value = player1.Health;
+            pbPlayer2Health.Value = player2.Health;
+
+            lblPlayer1Info.Text = $"Mana: {player1.Mana}\nRage: {player1.Rage}";
+            lblPlayer2Info.Text = $"Mana: {player2.Mana}\nRage: {player2.Rage}";
+            //lblPlayer1Info.Text = $"Người chơi 1:\nMana: {player1.Mana}\nRage: {player1.Rage}\nHP: {player1.Health}";
+            //lblPlayer2Info.Text = $"Người chơi 2:\nMana: {player2.Mana}\nRage: {player2.Rage}\nHP: {player2.Health}";
         }
 
 
