@@ -1,0 +1,12 @@
+D:\c#\WindowsFormsApp10\bin\Debug\WindowsFormsApp10.exe.config
+D:\c#\WindowsFormsApp10\bin\Debug\WindowsFormsApp10.exe
+D:\c#\WindowsFormsApp10\bin\Debug\WindowsFormsApp10.pdb
+D:\c#\WindowsFormsApp10\bin\Debug\Newtonsoft.Json.dll
+D:\c#\WindowsFormsApp10\bin\Debug\Newtonsoft.Json.xml
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.csproj.AssemblyReference.cache
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.Properties.Resources.resources
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.csproj.GenerateResource.cache
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.csproj.CoreCompileInputs.cache
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsF.E63CBBD4.Up2Date
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.exe
+D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.pdb
