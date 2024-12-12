@@ -34,30 +34,43 @@ namespace BoardGameWinForms
 
         public bool CheckWinCondition(int x, int y, CellState playerState)
         {
-            // Kiểm tra 5 quân liên tiếp (thay vì 4)
-            if (CheckLine(x, y, 1, 0, playerState) >= 5 || // Dọc
-                CheckLine(x, y, 0, 1, playerState) >= 5 || // Ngang
-                CheckLine(x, y, 1, 1, playerState) >= 5 || // Chéo
-                CheckLine(x, y, 1, -1, playerState) >= 5)   // Chéo ngược
+            int[][] directions = new int[][] {
+        new int[] {1, 0}, // Dọc
+        new int[] {0, 1}, // Ngang
+        new int[] {1, 1}, // Chéo phải
+        new int[] {1, -1} // Chéo trái
+    };
+
+            foreach (var dir in directions)
             {
-                return true;
+                bool blockedEnds;
+                int count = CheckLine(x, y, dir[0], dir[1], playerState, out blockedEnds);
+
+                if (count >= 5 && !blockedEnds)
+                    return true; // Thắng nếu đủ 5 quân và không bị chặn hai đầu
             }
-            return false;
+
+            return false; // Không thỏa mãn bất kỳ điều kiện nào
         }
+
         // Kiểm tra số lượng quân liên tiếp theo hướng (dx, dy)
-        private int CheckLine(int x, int y, int dx, int dy, CellState playerState)
+        private int CheckLine(int x, int y, int dx, int dy, CellState playerState, out bool blockedEnds)
         {
             int count = 0;
-            int nx = x;
-            int ny = y;
+            blockedEnds = false;
 
             // Kiểm tra về phía trước
+            int nx = x;
+            int ny = y;
             while (IsInBounds(nx, ny) && board[nx, ny] == playerState)
             {
                 count++;
                 nx += dx;
                 ny += dy;
             }
+            // Kiểm tra nếu bị chặn phía trước
+            if (!IsInBounds(nx, ny) || (board[nx, ny] != CellState.Empty && board[nx, ny] != playerState))
+                blockedEnds = true;
 
             // Kiểm tra về phía sau
             nx = x - dx;
@@ -68,9 +81,14 @@ namespace BoardGameWinForms
                 nx -= dx;
                 ny -= dy;
             }
+            // Kiểm tra nếu bị chặn phía sau
+            if (!IsInBounds(nx, ny) || (board[nx, ny] != CellState.Empty && board[nx, ny] != playerState))
+                blockedEnds &= true; // Cả hai đầu đều bị chặn
 
             return count;
         }
+
+
 
 
 
@@ -217,6 +235,18 @@ namespace BoardGameWinForms
             InitializeComponent();
             InitializeGame();
         }
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+
+            // Dừng Timer khi form đóng
+            if (turnTimer != null && turnTimer.Enabled)
+            {
+                turnTimer.Stop();
+                turnTimer.Dispose(); // Giải phóng tài nguyên
+            }
+        }
+        
 
         private void InitializeComponent()
         {
@@ -309,11 +339,18 @@ namespace BoardGameWinForms
         }
         private void StartTurnTimer()
         {
-            timeLeft = 10;
-            lblTimeLeft.Text = $"Thời gian: {timeLeft}s"; // Cập nhật label khi bắt đầu timer
+            if (turnTimer == null)
+            {
+                turnTimer = new Timer { Interval = 1000 };
+                turnTimer.Tick += TurnTimer_Tick;
+            }
 
+            timeLeft = 10; // Reset thời gian
+            lblTimeLeft.Text = $"Thời gian: {timeLeft}s";
             turnTimer.Start();
         }
+
+
 
         private void StopTurnTimer()
         {
@@ -326,12 +363,13 @@ namespace BoardGameWinForms
 
             if (timeLeft <= 0)
             {
+                // Hết thời gian
                 StopTurnTimer();
-                MessageBox.Show($"Hết giờ! Lượt của người chơi {currentPlayerIndex + 1} bị mất.");
-                SwitchTurns();
-
+                MessageBox.Show($"Hết giờ! Người chơi {currentPlayerIndex + 1} mất lượt.");
+                SwitchTurns(); // Chuyển lượt
             }
         }
+
         private void InitializeGame()
         {
             boardManager = new BoardManager();
@@ -392,6 +430,9 @@ namespace BoardGameWinForms
             if (boardManager.board[coordinates.X, coordinates.Y] == CellState.Resource)
             {
                 CollectResource(coordinates.X, coordinates.Y);
+                StopTurnTimer(); // Dừng timer hiện tại
+                SwitchTurns();   // Chuyển lượt
+                StartTurnTimer();
                 return;
             }
 
@@ -434,14 +475,18 @@ namespace BoardGameWinForms
 
                 // Cập nhật thông tin người chơi
                 UpdatePlayerInfo();
-                SwitchTurns();
+                StopTurnTimer(); // Dừng timer hiện tại
+                SwitchTurns();   // Chuyển lượt
+                StartTurnTimer();
             }
             else
             {
                 MessageBox.Show("Nước đi không hợp lệ. Vui lòng chọn ô trống.");
             }
-            StopTurnTimer();
-            SwitchTurns();
+            StopTurnTimer(); // Dừng timer hiện tại
+            SwitchTurns();   // Chuyển lượt
+            StartTurnTimer(); // Bắt đầu timer cho lượt tiếp theo
+
         }
 
         private void CollectResource(int x, int y)
@@ -482,6 +527,7 @@ namespace BoardGameWinForms
 
             // Đặt quân cờ của người chơi hiện tại vào ô tài nguyên
             boardManager.PlacePiece(x, y, currentPlayerState);
+            boardManager.board[x, y] = currentPlayerIndex == 0 ? CellState.Player1 : CellState.Player2;
 
             // Cập nhật giao diện
             UpdateButtonDisplay(x, y, currentPlayerState);
@@ -525,6 +571,10 @@ namespace BoardGameWinForms
             // Thông báo người chơi đã thu thập tài nguyên
             if (resourceText == "S")
             {
+                boardManager.PlacePiece(x, y, currentPlayerState);
+                
+                boardManager.board[x, y] = currentPlayerState; // Đảm bảo trạng thái ô cập nhật
+
                 string boostMessage = currentPlayer.BoostedDamageTurns > 0
                     ? " (Sát thương tăng gấp đôi do Rage Boost!)"
                     : "";
@@ -532,10 +582,15 @@ namespace BoardGameWinForms
             }
             else
             {
+                boardManager.PlacePiece(x, y, currentPlayerState);
+                
+                boardManager.board[x, y] = currentPlayerState; // Đảm bảo trạng thái ô cập nhật
+
                 MessageBox.Show($"Người chơi {currentPlayerIndex + 1} đã thu thập tài nguyên: {resourceText} và đặt quân");
             }
-            StopTurnTimer();
-            SwitchTurns();
+            StopTurnTimer(); // Dừng timer hiện tại
+            SwitchTurns();   // Chuyển lượt
+            StartTurnTimer();
         }
         private void SwitchTurns()
         {

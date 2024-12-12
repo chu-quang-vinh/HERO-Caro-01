@@ -15,7 +15,15 @@ namespace WindowsFormsApp10
             
             SetupGameModeSelection();
             this.loginForm = loginForm; // Lưu trữ reference
-        }
+            // Thêm sự kiện FormClosing tại đây
+            this.FormClosing += (s, e) =>
+            {
+                if (e.CloseReason == CloseReason.UserClosing)
+                {
+                    Application.Exit(); // Đóng toàn bộ ứng dụng
+                }
+            };
+            }
         // Enum for game modes
         public enum GameMode
         {
@@ -28,6 +36,12 @@ namespace WindowsFormsApp10
         {
             
             SetupGameModeSelection();
+            this.FormClosing += (s, e) => {
+                if (e.CloseReason == CloseReason.UserClosing)
+                {
+                    Application.Exit(); // Đóng toàn bộ ứng dụng
+                }
+            };
         }
 
         private void SetupGameModeSelection()
@@ -119,9 +133,9 @@ namespace WindowsFormsApp10
                 case GameMode.TwoPlayer:
                     // Khởi tạo GameForm từ BoardGameWinForms
                     BoardGameWinForms.GameForm game = new BoardGameWinForms.GameForm();
-                    game.Show();
                     this.Hide(); // Ẩn form chọn chế độ
-                    game.FormClosed += (s, e) => this.Close(); // Đóng GameForm khi game kết thúc
+                    game.ShowDialog(); // Hiển thị form game dưới dạng modal dialog
+                    this.Show(); // Hiển thị lại form chọn chế độ sau khi form game đóng
 
                     // Không cần cấu hình thêm gì nữa, vì game đã tự xử lý
                     return; // Thoát khỏi hàm StartGame
