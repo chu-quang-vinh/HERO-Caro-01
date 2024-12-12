@@ -521,6 +521,12 @@ namespace BoardGameWinForms
                     currentPlayer.BoostedDamageTurns--;
                 }
             }
+            else if (resourceText == "H")
+            {
+                // Logic cộng máu
+                currentPlayer.Health = Math.Min(currentPlayer.Health + 10, 100); // Không vượt quá 100 HP
+            }
+
 
             // Xác định trạng thái người chơi hiện tại
             CellState currentPlayerState = currentPlayerIndex == 0 ? CellState.Player1 : CellState.Player2;
@@ -856,6 +862,7 @@ namespace BoardGameWinForms
             lblPlayer1Info.Text = $"Người chơi 1:\nMana: {player1.Mana}\nRage: {player1.Rage}\nHP: {player1.Health}";
             lblPlayer2Info.Text = $"Người chơi 2:\nMana: {player2.Mana}\nRage: {player2.Rage}\nHP: {player2.Health}";
         }
+
 
         private void UpdateBoardDisplay()
         {
