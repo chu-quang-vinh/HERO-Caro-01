@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using BoardGameWinForms;
-
+using chế_độ_cổ_điển; // Thêm using cho namespace của MainForm1
 namespace WindowsFormsApp10
 {
     public partial class GameForm : Form
@@ -10,6 +10,7 @@ namespace WindowsFormsApp10
         private Button btnClassicMode, btnChallengeMode, btnTwoPlayerMode;
         private GameMode currentGameMode;
         private LoginForm loginForm; // Thêm biến thành viên
+        private MainForm1 challengeFormInstance; // Thêm biến thành viên
         public GameForm(LoginForm loginForm) // Constructor mới
         {
             
@@ -67,7 +68,15 @@ namespace WindowsFormsApp10
 
             // Challenge Mode Button
             btnChallengeMode = CreateModeButton("Chế Độ Vượt Thử Thách", 150, 250);
-            btnChallengeMode.Click += (s, e) => StartGame(GameMode.Challenge);
+            btnChallengeMode.Click += (s, e) => {
+                if (challengeFormInstance == null || challengeFormInstance.IsDisposed)
+                {
+                    challengeFormInstance = new MainForm1();
+                }
+                this.Hide();
+                challengeFormInstance.ShowDialog();
+                this.Show();
+            };
 
             // Two Player Mode Button
             btnTwoPlayerMode = CreateModeButton("Chế Độ Hai Người Chơi", 150, 350);
@@ -125,7 +134,7 @@ namespace WindowsFormsApp10
             switch (mode)
             {
                 case GameMode.Classic:
-                    ConfigureClassicMode(gameplayForm, boardManager, player1, player2, gameFormInstance);
+                    ConfigureClassicMode(gameplayForm,  gameFormInstance);
                     break;
                 case GameMode.Challenge:
                     ConfigureChallengeMode(gameplayForm, boardManager, player1, player2, gameFormInstance);
@@ -169,25 +178,18 @@ namespace WindowsFormsApp10
             }
         }
 
-        private void ConfigureClassicMode(Form gameForm, BoardManager boardManager, Player player1, Player player2, GameForm gameFormInstance)
+        private void ConfigureClassicMode(Form gameForm, GameForm gameFormInstance)
         {
-            // Cài đặt cho chế độ cổ điển
-            // Ví dụ: Giới hạn thời gian, số lượng nước đi, v.v.
-            Label lblClassicModeInfo = new Label
-            {
-                Text = "Chế Độ Cổ Điển: Chiến thắng bằng 5 quân liên tiếp",
-                Location = new Point(50, 50),
-                AutoSize = true
-            };
-            gameForm.Controls.Add(lblClassicModeInfo);
-            CreateBackButton(gameForm, gameFormInstance);
-            // Có thể thêm các quy tắc riêng cho chế độ cổ điển
+            // Khởi tạo và hiển thị Form3
+            Form3 form3 = new Form3();
+            gameForm.Hide(); // Ẩn form chọn chế độ
+            form3.ShowDialog();
+            gameFormInstance.Show();
         }
 
         private void ConfigureChallengeMode(Form gameForm, BoardManager boardManager, Player player1, Player player2, GameForm gameFormInstance)
         {
-            // Cài đặt cho chế độ vượt thử thách
-            // Ví dụ: Tăng độ khó, giảm HP, hạn chế kỹ năng
+            
             Label lblChallengeModeInfo = new Label
             {
                 Text = "Chế Độ Vượt Thử Thách: Độ khó cao, HP giảm",
@@ -197,8 +199,7 @@ namespace WindowsFormsApp10
             gameForm.Controls.Add(lblChallengeModeInfo);
 
             // Điều chỉnh HP ban đầu
-            player1.Health = 80;
-            player2.Health = 80;
+            
             CreateBackButton(gameForm, gameFormInstance);
         }
 

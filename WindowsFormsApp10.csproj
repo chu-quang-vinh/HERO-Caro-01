@@ -49,6 +49,31 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class1.cs" />
+    <Compile Include="GameForm0.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GameForm0.Designer.cs">
+      <DependentUpon>GameForm0.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GameForm1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GameForm1.Designer.cs">
+      <DependentUpon>GameForm1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GameForm2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GameForm2.Designer.cs">
+      <DependentUpon>GameForm2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MainForm1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm1.Designer.cs">
+      <DependentUpon>MainForm1.cs</DependentUpon>
+    </Compile>
     <Compile Include="UserManager.cs" />
     <Compile Include="GameForm.cs">
       <SubType>Form</SubType>

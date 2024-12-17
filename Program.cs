@@ -41,25 +41,29 @@ namespace BoardGameWinForms
         new int[] {0, 1}, // Ngang
         new int[] {1, 1}, // Chéo phải
         new int[] {1, -1} // Chéo trái
-    };
+        };
 
             foreach (var dir in directions)
             {
                 bool blockedEnds;
-                int count = CheckLine(x, y, dir[0], dir[1], playerState, out blockedEnds);
-
-                if (count >= 5 && !blockedEnds)
+                if (CheckLine(x, y, dir[0], dir[1], playerState, out blockedEnds))
+                {
                     return true; // Thắng nếu đủ 5 quân và không bị chặn hai đầu
+                }
+
+
             }
 
             return false; // Không thỏa mãn bất kỳ điều kiện nào
         }
 
         // Kiểm tra số lượng quân liên tiếp theo hướng (dx, dy)
-        private int CheckLine(int x, int y, int dx, int dy, CellState playerState, out bool blockedEnds)
+        private bool CheckLine(int x, int y, int dx, int dy, CellState playerState, out bool blockedEnds)
         {
             int count = 0;
             blockedEnds = false;
+            bool blockedStart = false;
+            bool blockedEnd = false;
 
             // Kiểm tra về phía trước
             int nx = x;
@@ -71,8 +75,13 @@ namespace BoardGameWinForms
                 ny += dy;
             }
             // Kiểm tra nếu bị chặn phía trước
-            if (!IsInBounds(nx, ny) || (board[nx, ny] != CellState.Empty && board[nx, ny] != playerState))
-                blockedEnds = true;
+            if (IsInBounds(nx, ny))
+            { // Nếu vẫn còn trong bàn cờ
+                if (board[nx, ny] != CellState.Empty && board[nx, ny] != playerState)
+                {
+                    blockedEnd = true; // Bị chặn bởi quân khác
+                }
+            }
 
             // Kiểm tra về phía sau
             nx = x - dx;
@@ -83,11 +92,19 @@ namespace BoardGameWinForms
                 nx -= dx;
                 ny -= dy;
             }
-            // Kiểm tra nếu bị chặn phía sau
-            if (!IsInBounds(nx, ny) || (board[nx, ny] != CellState.Empty && board[nx, ny] != playerState))
-                blockedEnds &= true; // Cả hai đầu đều bị chặn
 
-            return count;
+            // Kiểm tra nếu bị chặn phía sau
+            if (IsInBounds(nx, ny))
+            { // Nếu vẫn còn trong bàn cờ
+                if (board[nx, ny] != CellState.Empty && board[nx, ny] != playerState)
+                {
+                    blockedStart = true; // Bị chặn bởi quân khác
+                }
+            }
+
+            blockedEnds = blockedStart && blockedEnd; // Cả hai đầu đều bị chặn
+
+            return count >= 5 && !blockedEnds;
         }
 
 
@@ -172,6 +189,7 @@ namespace BoardGameWinForms
             }
             return false;
         }
+
 
     }
 
@@ -263,7 +281,7 @@ namespace BoardGameWinForms
             // Khởi tạo bảng chơi
             Panel boardPanel = new Panel
             {
-                Location = new Point(300, 100), // Trung tâm giao diện
+                Location = new Point(330, 100), // Trung tâm giao diện
                 Size = new Size(500, 500)
             };
 
@@ -336,14 +354,14 @@ namespace BoardGameWinForms
             };
             lblPlayer1Info = new Label
             {
-                Location = new Point(100, 120),
+                Location = new Point(80, 120),
                 Size = new Size(200, 100),
                 Font = new Font(Font.FontFamily, 10),
                 Text = "Thông tin Người chơi 1"
             };
             lblPlayer2Info = new Label
             {
-                Location = new Point(800, 100),
+                Location = new Point(880, 120),
                 Size = new Size(200, 100),
                 Font = new Font(Font.FontFamily, 10),
                 Text = "Thông tin Người chơi 2"
@@ -355,9 +373,9 @@ namespace BoardGameWinForms
             this.Controls.Add(lblPlayer2Info);
 
             // Khởi tạo các nút kỹ năng
-            btnDestroyArea = CreateSkillButton("Phá hủy vùng (2M 2R)", 450, 600);
-            btnHeal = CreateSkillButton("Hồi máu (3M)", 450, 630);
-            btnRageBoost = CreateSkillButton("Tăng Rage (3R)", 450, 660);
+            btnDestroyArea = CreateSkillButton("Phá hủy vùng (2M 2R)", 480, 600);
+            btnHeal = CreateSkillButton("Hồi máu (3M)", 480, 630);
+            btnRageBoost = CreateSkillButton("Tăng Rage (3R)", 480, 660);
 
             btnDestroyArea.Click += (s, e) => UseSkill(SkillType.DestroyArea);
             btnHeal.Click += (s, e) => UseSkill(SkillType.Heal);
@@ -372,7 +390,7 @@ namespace BoardGameWinForms
             this.Controls.Add(boardPanel);
 
             // Kiểm tra và thêm hình nền
-            string backgroundPath = "C:\\Users\\Admin\\Downloads\\naruto.png";
+            string backgroundPath = "D:\\c#\\WindowsFormsApp10\\Imagin\\Nền Two.jpg";
             if (File.Exists(backgroundPath))
             {
                 this.BackgroundImage = Image.FromFile(backgroundPath);
@@ -435,12 +453,12 @@ namespace BoardGameWinForms
             player2 = new Player();
 
             // Cài đặt tài nguyên mặc định cho người chơi 1
-            player1.Mana = 5; // Ví dụ: 5 Mana
-            player1.Rage = 5; // Ví dụ: 5 Rage
+            player1.Mana = 0; // Ví dụ: 5 Mana
+            player1.Rage = 0; // Ví dụ: 5 Rage
 
             // Cài đặt tài nguyên mặc định cho người chơi 2 (tùy chọn)
-            player2.Mana = 5;
-            player2.Rage = 5;
+            player2.Mana = 0;
+            player2.Rage = 0;
 
 
             UpdatePlayerInfo();
@@ -456,32 +474,53 @@ namespace BoardGameWinForms
             if (isSelectingDestroyArea)
             {
                 // Sử dụng kỹ năng DestroyArea tại vị trí được chọn
-                Player currentPlayer = currentPlayerIndex == 0 ? player1 : player2;
+                Player currentPlayerUsingSkill = currentPlayerIndex == 0 ? player1 : player2; // Đổi tên biến ở đây
                 boardManager.ClearArea(coordinates.X, coordinates.Y);
-                
-                
 
-                // Cập nhật lại các nút bị ảnh hưởng bởi ClearArea
-                for (int x = Math.Max(0, coordinates.X - 1); x < Math.Min(BoardManager.BOARD_SIZE, coordinates.X + 2); x++)
+
+
+                // Cập nhật lại giao diện và bàn cờ sau khi sử dụng kỹ năng
+                for (int i = Math.Max(0, coordinates.X - 1); i < Math.Min(BoardManager.BOARD_SIZE, coordinates.X + 2); i++)
                 {
-                    for (int y = Math.Max(0, coordinates.Y - 1); y < Math.Min(BoardManager.BOARD_SIZE, coordinates.Y + 2); y++)
+                    for (int j = Math.Max(0, coordinates.Y - 1); j < Math.Min(BoardManager.BOARD_SIZE, coordinates.Y + 2); j++)
                     {
-                        boardButtons[x, y].Text = "";
-                        boardButtons[x, y].BackColor = Color.White;
+                        boardManager.board[i, j] = CellState.Empty; // Cập nhật lại mảng board
+                        boardButtons[i, j].Text = "";
+                        boardButtons[i, j].BackColor = Color.White;
+
+                        // ***KIỂM TRA CHIẾN THẮNG CHO TẤT CẢ NGƯỜI CHƠI SAU KHI PHÁ HỦY VÙNG***
+                        if (boardManager.CheckWinCondition(i, j, CellState.Player1))
+                        {
+                            MessageBox.Show("Người chơi 1 chiến thắng!");
+                            ResetGame();
+                            return;
+                        }
+                        if (boardManager.CheckWinCondition(i, j, CellState.Player2))
+                        {
+                            MessageBox.Show("Người chơi 2 chiến thắng!");
+                            ResetGame();
+                            return;
+                        }
+
+
                     }
                 }
 
 
-                isSelectingDestroyArea = false; // Kết thúc chọn vùng
-                currentPlayerIndex = 1 - currentPlayerIndex; //chuyển lượt
-                turnCount++;
-                lblCurrentTurn.Text = $"Lượt chơi: Người chơi {currentPlayerIndex + 1}";
-                GenerateRandomResource();
-                UpdatePlayerInfo();
+            isSelectingDestroyArea = false; // Kết thúc chọn vùng
 
+                // **THÊM ĐOẠN CODE NÀY**
+                Player currentPlayer = currentPlayerIndex == 0 ? player1 : player2;
+                CellState currentPlayerState = currentPlayerIndex == 0 ? CellState.Player1 : CellState.Player2;
+                if (boardManager.CheckWinCondition(coordinates.X, coordinates.Y, currentPlayerState)) // Kiểm tra lại chiến thắng
+                {
+                    MessageBox.Show($"Người chơi {currentPlayerIndex + 1} chiến thắng!");
+                    ResetGame();
+                    return;
+                }
+
+                SwitchTurns(); // Chuyển lượt sau khi kiểm tra chiến thắng
                 return; // Thoát khỏi xử lý sự kiện click bình thường
-
-
             }
 
             // Kiểm tra nếu ô là tài nguyên
@@ -901,6 +940,7 @@ namespace BoardGameWinForms
                 {
                     boardButtons[i, j].Text = "";
                     boardButtons[i, j].BackColor = DefaultBackColor;
+                    boardManager.board[i, j] = CellState.Empty;
                 }
             }
 
@@ -908,6 +948,16 @@ namespace BoardGameWinForms
             turnCount = 0;
 
             lblCurrentTurn.Text = "Lượt chơi: Người chơi 1";
+
+            // Reset máu, mana và rage của người chơi
+            player1.Health = 100;
+            player1.Mana = 0;
+            player1.Rage = 0;
+            player2.Health = 100;
+            player2.Mana = 0;
+            player2.Rage = 0;
+
+            UpdatePlayerInfo();
         }
 
         private void UpdateButtonDisplay(int x, int y, CellState state)

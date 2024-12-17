@@ -1,6 +1,7 @@
-﻿namespace WindowsFormsApp10
+﻿
+namespace chế_độ_cổ_điển
 {
-    partial class Form3
+    partial class GameForm0
     {
         /// <summary>
         /// Required designer variable.
@@ -19,25 +20,24 @@
             }
             base.Dispose(disposing);
         }
-        //private void InitializeComponent() { 
-        //    this.components = new System.ComponentModel.Container(); 
-        //    this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font; 
-        //    this.ClientSize = new System.Drawing.Size(1200, 800); 
-        //    this.Text = "Form3"; 
-        //}
+
         #region Windows Form Designer generated code
 
         /// <summary>
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        //private void InitializeComponent()
-        //{
-        //    this.components = new System.ComponentModel.Container();
-        //    this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        //    this.ClientSize = new System.Drawing.Size(800, 450);
-        //    this.Text = "Form3";
-        //}
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // GameForm
+            // 
+            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Name = "GameForm";
+            this.Text = "Caro Game";
+            this.ResumeLayout(false);
+        }
 
         #endregion
     }
