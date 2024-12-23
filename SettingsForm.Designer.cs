@@ -1,16 +1,6 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-namespace chế_độ_cổ_điển
+﻿namespace WindowsFormsApp10
 {
-    partial class MainForm1
+    partial class SettingsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -36,7 +26,13 @@ namespace chế_độ_cổ_điển
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Text = "SettingsForm";
+        }
 
         #endregion
     }

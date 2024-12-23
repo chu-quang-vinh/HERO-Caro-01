@@ -9,22 +9,26 @@ namespace WindowsFormsApp10
     {
         private Button btnClassicMode, btnChallengeMode, btnTwoPlayerMode;
         private GameMode currentGameMode;
-        private LoginForm loginForm; // Thêm biến thành viên
+        private LoginForm loginForm;
+        private UserManager userManager; // Add this line
         private MainForm1 challengeFormInstance; // Thêm biến thành viên
-        public GameForm(LoginForm loginForm) // Constructor mới
+        private MainForm mainForm; // Thêm biến thành viên
+        public GameForm(MainForm mainFormInstance, LoginForm loginFormInstance, UserManager userManagerInstance)
         {
-            
+            this.mainForm = mainFormInstance; // Lưu instance của MainForm
+            this.loginForm = loginFormInstance;
+            this.userManager = userManagerInstance;
+
             SetupGameModeSelection();
-            this.loginForm = loginForm; // Lưu trữ reference
-            // Thêm sự kiện FormClosing tại đây
+
             this.FormClosing += (s, e) =>
             {
                 if (e.CloseReason == CloseReason.UserClosing)
                 {
-                    Application.Exit(); // Đóng toàn bộ ứng dụng
+                    Application.Exit();
                 }
             };
-            }
+        }
         // Enum for game modes
         public enum GameMode
         {
@@ -92,7 +96,7 @@ namespace WindowsFormsApp10
             btnBack.Click += (s, e) =>
             {
                 this.Close();
-                loginForm.Show();  // Hiển thị lại LoginForm
+                mainForm.Show(); // Hiển thị lại MainForm
             };
 
             // Add controls
