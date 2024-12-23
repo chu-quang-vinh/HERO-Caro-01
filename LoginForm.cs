@@ -4,18 +4,39 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
+using MetroFramework.Forms; // Import MetroFramework
+using MetroFramework.Controls; // For Metro controls
+using System.Drawing.Drawing2D; // For rounded corners
+
 
 namespace WindowsFormsApp10
 {
-    public partial class LoginForm : Form
+    public partial class LoginForm : MetroForm
     {
         private UserManager userManager;
         private string userFilePath = "users.json";
+        private MetroFramework.Controls.MetroTextBox txtUsername;
+        private MetroFramework.Controls.MetroTextBox txtPassword;
+        private MetroFramework.Controls.MetroLabel lblUsername, lblPassword;
+        private MetroFramework.Controls.MetroButton btnLogin;
+        private MetroFramework.Controls.MetroButton btnRegister;
 
         public LoginForm()
         {
+
             InitializeComponent();
             userManager = new UserManager(userFilePath);
+
+            // Style the buttons and add click event in LoginForm.cs (not in designer!)
+            //btnLogin = StyleButton(btnLogin, "Đăng nhập");
+            //btnLogin.Location = new Point(100, 185); // Example location
+            //btnLogin.Click += BtnLogin_Click;
+
+            //btnRegister = StyleButton(btnRegister, "Đăng ký");
+            //btnRegister.Location = new Point(220, 185); // Example location
+            //btnRegister.Click += BtnRegister_Click;
+
+
         }
 
         private void BtnLogin_Click(object sender, EventArgs e)
@@ -41,14 +62,9 @@ namespace WindowsFormsApp10
 
         private void BtnRegister_Click(object sender, EventArgs e)
         {
-            if (userManager.Register(txtUsername.Text, txtPassword.Text, txtEmail.Text, txtFullName.Text))
-            {
-                MessageBox.Show("Đăng ký thành công!");
-            }
-            else
-            {
-                MessageBox.Show("Đăng ký thất bại. Vui lòng kiểm tra lại thông tin!");
-            }
+            // Open the registration form
+            RegistrationForm registrationForm = new RegistrationForm(userManager);
+            registrationForm.ShowDialog(); // Show modally so user must interact with it
         }
     }
 }

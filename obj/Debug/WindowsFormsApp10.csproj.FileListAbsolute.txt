@@ -5,6 +5,9 @@ D:\c#\WindowsFormsApp10\obj\Debug\WindowsFormsApp10.csproj.CoreCompileInputs.cac
 D:\c#\WindowsFormsApp10\bin\Debug\WindowsFormsApp10.exe.config
 D:\c#\WindowsFormsApp10\bin\Debug\WindowsFormsApp10.exe
 D:\c#\WindowsFormsApp10\bin\Debug\WindowsFormsApp10.pdb
+D:\c#\WindowsFormsApp10\bin\Debug\MetroFramework.Design.dll
+D:\c#\WindowsFormsApp10\bin\Debug\MetroFramework.dll
+D:\c#\WindowsFormsApp10\bin\Debug\MetroFramework.Fonts.dll
 D:\c#\WindowsFormsApp10\bin\Debug\Newtonsoft.Json.dll
 D:\c#\WindowsFormsApp10\bin\Debug\Newtonsoft.Json.xml
 D:\c#\WindowsFormsApp10\obj\Debug\WindowsF.E63CBBD4.Up2Date

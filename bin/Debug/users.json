@@ -3,5 +3,15 @@
     "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
     "email": "123",
     "fullName": "123"
+  },
+  "susu": {
+    "password": "a858c1f331b17abb247815aa40c7f15d930c6d2b760946ceac92f9d1bed96b0c",
+    "email": "susu@gmail.com",
+    "fullName": "Nguyễn Hòn Sơn"
+  },
+  "Tên đăng nhập": {
+    "password": "3803f86ee0e4542c2228934aecd5d8d16dec617c19c49e0666ab16434037611b",
+    "email": "Email",
+    "fullName": "Họ và tên"
   }
 }
