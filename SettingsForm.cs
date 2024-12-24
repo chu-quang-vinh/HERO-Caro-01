@@ -8,13 +8,17 @@ namespace WindowsFormsApp10
     {
         private LoginForm loginForm;
         private UserManager userManager;
-        public SettingsForm(UserManager userManager) // Constructor nhận UserManager
+        private MusicPlayer bgm;  // Đối tượng MusicPlayer để điều chỉnh nhạc nền
+        private float initialVolume;
+        private MainForm mainForm; // Thêm một biến để lưu trữ đối tượng MainForm
+        public SettingsForm(MainForm mainForm, MusicPlayer bgm, float initialVolume)
         {
             InitializeComponent();
-            this.userManager = userManager; // Assign the UserManager
+            this.mainForm = mainForm;  // Lưu đối tượng MainForm
+            this.bgm = bgm;
+            this.initialVolume = initialVolume;
             SetupSettingsForm();
         }
-
         private void SetupSettingsForm()
         {
             this.Text = "Settings";
@@ -38,13 +42,26 @@ namespace WindowsFormsApp10
             };
             this.Controls.Add(lblVolume);
 
+            // TrackBar để điều chỉnh âm lượng
             TrackBar trackVolume = new TrackBar
             {
                 Minimum = 0,
                 Maximum = 100,
-                Value = 50,
+                Value = (int)(initialVolume * 100),
                 Location = new Point(120, 90),
                 Width = 200
+            };
+            trackVolume.Scroll += (s, e) =>
+            {
+                if (bgm != null)
+                {
+                    float volume = trackVolume.Value / 100f; // Chuyển giá trị từ 0.0f đến 1.0f
+                    bgm.SetVolume(volume); // Điều chỉnh âm lượng
+                }
+                else
+                {
+                    MessageBox.Show("Music player is not initialized!");
+                }
             };
             this.Controls.Add(trackVolume);
 
@@ -56,8 +73,20 @@ namespace WindowsFormsApp10
             };
             btnSave.Click += (s, e) =>
             {
-                MessageBox.Show("Settings saved!");
-                this.Close();
+                // Kiểm tra bgm không null trước khi lưu âm lượng
+                if (bgm != null)
+                {
+                    float volume = trackVolume.Value / 100f;
+                    bgm.SetVolume(volume);
+                    // Sử dụng mainForm đã truyền vào để gọi hàm UpdateVolume
+                    mainForm.UpdateVolume(volume);
+                    MessageBox.Show("Settings saved!");
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Music player is not initialized!");
+                }
             };
             this.Controls.Add(btnSave);
 
