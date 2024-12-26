@@ -24,7 +24,7 @@ namespace WindowsFormsApp10
             this.Text = "Settings";
             this.Size = new Size(400, 300);
             this.StartPosition = FormStartPosition.CenterScreen;
-
+            UIManager.SetFormBackground(this, "images (1).jpg");
             Label lblTitle = new Label
             {
                 Text = "Settings",

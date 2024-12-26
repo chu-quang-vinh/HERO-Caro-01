@@ -21,7 +21,7 @@ namespace WindowsFormsApp10
             this.Text = "User Profile";
             this.Size = new Size(400, 300);
             this.StartPosition = FormStartPosition.CenterScreen;
-
+            UIManager.SetFormBackground(this, "images (1).jpg");
         }
 
 
