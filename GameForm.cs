@@ -13,11 +13,17 @@ namespace WindowsFormsApp10
         private UserManager userManager; // Add this line
         private MainForm1 challengeFormInstance; // Thêm biến thành viên
         private MainForm mainForm; // Thêm biến thành viên
-        public GameForm(MainForm mainFormInstance, LoginForm loginFormInstance, UserManager userManagerInstance)
+        
+        private string currentUsername;
+        public GameForm(MainForm mainFormInstance, LoginForm loginFormInstance, UserManager userManagerInstance, string username)
+
         {
-            this.mainForm = mainFormInstance; // Lưu instance của MainForm
+            this.mainForm = mainFormInstance;
             this.loginForm = loginFormInstance;
             this.userManager = userManagerInstance;
+            this.currentUsername = username;
+            challengeFormInstance = new MainForm1(userManager, currentUsername);
+
 
             SetupGameModeSelection();
 
@@ -56,6 +62,8 @@ namespace WindowsFormsApp10
             this.Size = new Size(600, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
 
+            // Gọi SetFormBackground từ UIManager
+            UIManager.SetFormBackground(this, "images (1).jpg");
             // Title Label
             Label lblTitle = new Label
             {
@@ -73,17 +81,22 @@ namespace WindowsFormsApp10
             // Challenge Mode Button
             btnChallengeMode = CreateModeButton("Chế Độ Vượt Thử Thách", 150, 250);
             btnChallengeMode.Click += (s, e) => {
-                if (challengeFormInstance == null || challengeFormInstance.IsDisposed)
-                {
-                    challengeFormInstance = new MainForm1();
-                }
+                int savedLevel = userManager.LoadGameProgress(currentUsername);
+
+                // Tạo MainForm1 và truyền thông tin user
+                MainForm1 challengeForm = new MainForm1(userManager, currentUsername);
+                challengeForm.UpdateLevel(savedLevel);  // Cập nhật level hiện tại
+
+                // Hiển thị MainForm1 để người chơi thấy tiến độ
                 this.Hide();
-                challengeFormInstance.ShowDialog();
+                challengeForm.ShowDialog();
                 this.Show();
             };
 
+
+
             // Two Player Mode Button
-            btnTwoPlayerMode = CreateModeButton("Chế Độ Hai Người Chơi", 150, 350);
+            btnTwoPlayerMode = CreateModeButton("Chế Độ Hero", 150, 350);
             btnTwoPlayerMode.Click += (s, e) => StartGame(GameMode.TwoPlayer);
 
             // Back Button
@@ -95,8 +108,11 @@ namespace WindowsFormsApp10
             };
             btnBack.Click += (s, e) =>
             {
-                this.Close();
-                mainForm.Show(); // Hiển thị lại MainForm
+                this.Hide();  // Ẩn GameForm hiện tại
+                if (mainForm != null)
+                {
+                    mainForm.Show();  // Hiển thị lại MainForm
+                }
             };
 
             // Add controls
@@ -146,20 +162,17 @@ namespace WindowsFormsApp10
                 case GameMode.TwoPlayer:
                     // Khởi tạo GameForm từ BoardGameWinForms
                     BoardGameWinForms.GameForm game = new BoardGameWinForms.GameForm();
-                    this.Hide(); // Ẩn form chọn chế độ
-                    game.ShowDialog(); // Hiển thị form game dưới dạng modal dialog
-                    this.Show(); // Hiển thị lại form chọn chế độ sau khi form game đóng
-
-                    // Không cần cấu hình thêm gì nữa, vì game đã tự xử lý
+                    this.Hide();  // Ẩn form chọn chế độ
+                    game.ShowDialog();  // Hiển thị form game như modal dialog
+                    this.Show();  // Hiển thị lại GameForm sau khi đóng
                     return; // Thoát khỏi hàm StartGame
-                    
+
             }
 
             // Ẩn form chọn chế độ
             gameplayForm.FormClosed += (s, e) =>
             {
-                this.Show(); // Hiển thị GameForm khi gameplayForm đóng
-                // Hoặc this.Close(); nếu bạn muốn đóng toàn bộ ứng dụng
+                this.Show(); // Quay lại GameForm khi gameplayForm đóng
             };
             gameplayForm.Show();
 
@@ -220,6 +233,16 @@ namespace WindowsFormsApp10
             gameForm.Controls.Add(lblTwoPlayerModeInfo);
             CreateBackButton(gameForm, gameFormInstance);
         }
+        //private void btnChallengeMode_Click(object sender, EventArgs e)
+        //{
+        //    if (challengeFormInstance == null || challengeFormInstance.IsDisposed)
+        //    {
+        //        challengeFormInstance = new MainForm1(userManager, currentUsername); // Pass userManager and currentUsername
+        //    }
+        //    this.Hide();
+        //    challengeFormInstance.ShowDialog();
+        //    this.Show();
+        //}
         private void CreateBackButton(Form gameForm, GameForm gameFormInstance)
         {
             Button btnBack = new Button
@@ -231,8 +254,8 @@ namespace WindowsFormsApp10
 
             btnBack.Click += (s, e) =>
             {
-                gameForm.Close();
-                gameFormInstance.Show();
+                gameForm.Close();  // Close the current game form
+                gameFormInstance.Show();  // Show the game mode selection form
             };
 
             gameForm.Controls.Add(btnBack);

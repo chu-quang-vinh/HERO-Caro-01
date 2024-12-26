@@ -12,6 +12,8 @@
   "Tên đăng nhập": {
     "password": "3803f86ee0e4542c2228934aecd5d8d16dec617c19c49e0666ab16434037611b",
     "email": "Email",
-    "fullName": "Họ và tên"
+    "fullName": "Họ và tên",
+    "currentLevel": "3",
+    "gameMode": "Challenge"
   }
 }

@@ -47,7 +47,8 @@ namespace WindowsFormsApp10
             this.Text = "Caro Game - Main Menu";
             this.Size = new Size(600, 400); // Set the desired size
             this.StartPosition = FormStartPosition.CenterScreen;
-
+            // Gọi SetFormBackground từ UIManager
+            UIManager.SetFormBackground(this, "images (1).jpg");
             Label titleLabel = new Label
             {
                 Text = "Caro Game",
@@ -66,9 +67,11 @@ namespace WindowsFormsApp10
             };
             btnPlayGame.Click += (s, e) =>
             {
-                GameForm gameForm = new GameForm(this, this.loginForm, this.userManager); // Truyền this vào đây
-                this.Hide();
-                gameForm.Show();
+                this.Hide();  // Ẩn MainForm trước khi hiện GameForm
+                GameForm gameForm = new GameForm(this, loginForm, userManager, currentUsername);
+
+                gameForm.ShowDialog();
+                this.Show();
             };
             this.Controls.Add(btnPlayGame);
 

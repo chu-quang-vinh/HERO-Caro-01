@@ -51,7 +51,25 @@ public class UserManager
         string json = JsonConvert.SerializeObject(users, Formatting.Indented);
         File.WriteAllText(filePath, json);
     }
+    public void SaveGameProgress(string username, int currentLevel, string gameMode = "Challenge") // Added gameMode parameter
+    {
+        if (users.ContainsKey(username))
+        {
+            users[username]["currentLevel"] = currentLevel.ToString();
+            users[username]["gameMode"] = gameMode; // Save the game mode as well
+            SaveUsersToFile();
+        }
+    }
 
+
+    public int LoadGameProgress(string username, string gameMode = "Challenge") // Added gameMode parameter
+    {
+        if (users.ContainsKey(username) && users[username].ContainsKey("currentLevel") && users[username].ContainsKey("gameMode") && users[username]["gameMode"] == gameMode)
+        {
+            return int.Parse(users[username]["currentLevel"]);
+        }
+        return 1; // Default starting level if no progress is found
+    }
     public bool Register(string username, string password, string email, string fullName)
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
@@ -80,6 +98,14 @@ public class UserManager
             return users[username]; // Trả về thông tin người dùng
         }
         return null;
+    }
+    public int GetUserLevel(string username)
+    {
+        if (users.ContainsKey(username) && users[username].ContainsKey("currentLevel"))
+        {
+            return int.Parse(users[username]["currentLevel"]);
+        }
+        return 1;  // Mặc định level 1 nếu chưa có tiến độ
     }
 
     public bool Login(string username, string password)

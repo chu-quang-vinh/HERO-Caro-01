@@ -34,3 +34,8 @@ D:\c#\WindowsFormsApp10\bin\Debug\NAudio.WinMM.xml
 D:\c#\WindowsFormsApp10\bin\Debug\System.Security.AccessControl.xml
 D:\c#\WindowsFormsApp10\bin\Debug\System.Security.Principal.Windows.xml
 D:\c#\WindowsFormsApp10\bin\Debug\Resources\BauTroiMoi-DaLABMinhTocLam-16366284.mp3
+D:\c#\WindowsFormsApp10\bin\Debug\Resources\back_normal.jpg
+D:\c#\WindowsFormsApp10\bin\Debug\Resources\level_hover.png
+D:\c#\WindowsFormsApp10\bin\Debug\Resources\level1.png
+D:\c#\WindowsFormsApp10\bin\Debug\Resources\back_normal1.jpg
+D:\c#\WindowsFormsApp10\bin\Debug\Resources\images (1).jpg

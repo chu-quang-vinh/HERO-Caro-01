@@ -16,18 +16,22 @@ namespace chế_độ_cổ_điển
         private int timeLeft;
         private Label timerLabel;
         private bool playerTurn = true;
+        private UserManager userManager; // Add UserManager field
+        private string currentUsername;  // Add currentUsername field
 
+        public GameForm0(int level, MainForm1 mainForm, UserManager userManager, string username)
 
-        public GameForm0(int level, MainForm1 mainForm)
         {
-            this.level = level;
+            this.level = userManager.LoadGameProgress(username);  // Load tiến độ
             this.mainForm = mainForm;
-
+            this.userManager = userManager;
+            this.currentUsername = username;
             InitializeComponentCustom();
             InitializeBoard();
             InitializeTimer();
             SetBackgroundImage();
         }
+
         private void SetBackgroundImage()
         {
             // Đặt hình nền cho Form từ file có sẵn trong Resources
@@ -120,13 +124,30 @@ namespace chế_độ_cổ_điển
             gameState[x, y] = "X";
             playerTurn = false; // Chuyển lượt cho bot
 
+            // Khi thắng hoặc thua -> Đóng form hoàn toàn
             if (CheckWin(x, y, "X"))
             {
                 MessageBox.Show("You Win!", "Victory", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Cập nhật level và đóng form
                 mainForm.UpdateLevel(level + 1);
-                this.Close();
+                this.Dispose();  // Giải phóng tài nguyên hoàn toàn
                 return;
             }
+
+            // Đóng form khi thua
+            if (CheckWin(x, y, "O"))
+            {
+                DialogResult result = MessageBox.Show("You Lose!", "Defeat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (result == DialogResult.OK)
+                {
+                    this.Dispose();  // Đóng form khi người dùng nhấn OK
+                }
+            }
+
+
+
 
             // Để bot đánh ngay lập tức
             timer.Stop();

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WindowsFormsApp10;
 
 namespace chế_độ_cổ_điển
 {
@@ -16,22 +17,31 @@ namespace chế_độ_cổ_điển
     {
         private Button[] levelButtons;
         private int currentLevel = 1;
+        private UserManager userManager;
+        private string currentUsername;
 
-        public MainForm1()
+        public MainForm1(UserManager userManager, string username)
         {
+            this.userManager = userManager;
+            this.currentUsername = username;
             InitializeComponent();
             CenterControls();
-            SetBackgroundImage();
-        }
-        private void SetBackgroundImage()
-        {
-            // Đặt hình nền cho Form từ file có sẵn trong Resources
-            this.BackgroundImage = Image.FromFile(@"C:\Users\Admin\Downloads\tải xuống.jpg");
+            // Gọi SetFormBackground với tên file ảnh trong thư mục Resources
+            UIManager.SetFormBackground(this, "back_normal.jpg");
 
-            // Tự động điều chỉnh kích thước hình nền
-            this.BackgroundImageLayout = ImageLayout.Stretch;
+            //levelButtons = new Button[5];
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    levelButtons[i] = UIManager.CreateImageButton(
+            //        "level1.png",      // Nút bình thường
+            //        "level_hover.png", // Nút hover
+            //        150, 60
+            //    );
+            //    levelButtons[i].Click += (sender, e) => StartGame(i + 1);
+            //    this.Controls.Add(levelButtons[i]);
+            //}
         }
-
+        
         private void CenterControls()
         {
             // Tính toán vị trí trung tâm của form
@@ -64,43 +74,62 @@ namespace chế_độ_cổ_điển
         private void InitializeComponent()
         {
             this.Text = "Chế độ vượt thử thách";
-            this.Size = new Size(600, 400); // Kích thước tạm thời
+            this.Size = new Size(800, 600); // Đặt kích thước form
 
+            // Đặt form ở giữa màn hình
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            // Đặt hình nền
+            UIManager.SetFormBackground(this, "back_normal.jpg");
+
+            // Tạo tiêu đề
             Label titleLabel = new Label
             {
-                Text = "Chế độ vượt thử thách",
-                Font = new Font("Arial", 16, FontStyle.Bold),
-                AutoSize = true
+                Text = "Chế Độ Vượt Thử Th  ách",
+                Font = new Font("Arial", 24, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = true,
+                BackColor = Color.Transparent
             };
             this.Controls.Add(titleLabel);
 
+            // Khởi tạo mảng nút level
             levelButtons = new Button[5];
+
             for (int i = 0; i < 5; i++)
             {
-                levelButtons[i] = new Button
-                {
-                    Text = $"Level {i + 1} {(i + 1 == currentLevel ? "***" : "")}",
-                    Size = new Size(100, 40),
-                };
+                // Tạo nút cho mỗi level
+                levelButtons[i] = UIManager.CreateImageButton(
+                    "level1.png",        // Ảnh mặc định
+                    "level_hover.png",   // Ảnh hover
+                    150, 60
+                );
+
+                // Hiển thị text trên nút
+                levelButtons[i].Text = $"Level {i + 1}";
+                levelButtons[i].Font = new Font("Arial", 14, FontStyle.Bold);
+                levelButtons[i].ForeColor = Color.Black;
+
+                // Gán sự kiện click cho mỗi nút
                 levelButtons[i].Click += (sender, e) => StartGame(i + 1);
+
+                // Thêm nút vào form
                 this.Controls.Add(levelButtons[i]);
             }
+
+            // Căn giữa các thành phần
+            CenterControls();
         }
+
 
         private void StartGame(int level)
         {
-            //  if (level > currentLevel)
-            //  {
-            //      MessageBox.Show($"You need to complete Level {currentLevel} first!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            //      return;
-            //  }
-
             Form gameForm;
             level = currentLevel;
 
             if (level == 1)
             {
-                gameForm = new GameForm0(level, this);
+                gameForm = new GameForm0(level, this, userManager, currentUsername);
             }
             else if (level == 2)
             {
@@ -121,13 +150,18 @@ namespace chế_độ_cổ_điển
             this.Show();
         }
 
+
+
         public void UpdateLevel(int newLevel)
-        {
+        {   
             currentLevel = newLevel;
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < levelButtons.Length; i++)
             {
-                levelButtons[i].Text = $"Level {i + 1} {(i + 1 == currentLevel ? "***" : "")}";
+                levelButtons[i].Text = $"Level {i + 1} {(i + 1 <= currentLevel ? "***" : "")}";
             }
         }
+
+
+
     }
 }

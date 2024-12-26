@@ -390,16 +390,8 @@ namespace BoardGameWinForms
             this.Controls.Add(boardPanel);
 
             // Kiểm tra và thêm hình nền
-            string backgroundPath = "D:\\c#\\WindowsFormsApp10\\Imagin\\Nền Two.jpg";
-            if (File.Exists(backgroundPath))
-            {
-                this.BackgroundImage = Image.FromFile(backgroundPath);
-                this.BackgroundImageLayout = ImageLayout.Stretch;
-            }
-            else
-            {
-                MessageBox.Show("Không tìm thấy hình nền!");
-            }
+            // Gọi SetFormBackground từ UIManager
+            UIManager.SetFormBackground(this, "images (1).jpg");
         }
 
 

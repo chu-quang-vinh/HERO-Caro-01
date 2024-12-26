@@ -35,16 +35,26 @@ namespace WindowsFormsApp10
                 Label lblEmail = new Label { Text = "Email: " + userInfo["email"], Location = new Point(50, 80), AutoSize = true };
                 Label lblFullName = new Label { Text = "Họ và tên: " + userInfo["fullName"], Location = new Point(50, 110), AutoSize = true };
 
+                // Lấy tiến độ chơi
+                int currentLevel = userManager.GetUserLevel(currentUsername);
+                Label lblProgress = new Label
+                {
+                    Text = $"Tiến độ vượt thử thách: Level {currentLevel}",
+                    Location = new Point(50, 140),
+                    AutoSize = true
+                };
 
                 this.Controls.Add(lblUsername);
                 this.Controls.Add(lblEmail);
                 this.Controls.Add(lblFullName);
+                this.Controls.Add(lblProgress);
             }
             else
             {
                 MessageBox.Show("Không tìm thấy thông tin người dùng.");
             }
         }
+
 
 
 
